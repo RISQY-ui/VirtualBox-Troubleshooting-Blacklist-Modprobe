@@ -1,182 +1,178 @@
-# Troubleshooting-VirtualBox-Part-2-Blacklist-Modprobe---Solusi-Permanen
+# VirtualBox Troubleshooting: VMX Root Mode Error Fix
 
-# Troubleshooting VirtualBox: Solusi Error VMX Root Mode
-
-**Dokumentasi Teknis** | **OS: Linux Mint** | **Tanggal: 19 Juni 2026**
+# Technical Documentation | OS: Linux Mint | Date: June 19, 2026
 
 ---
 
-## 📋 Daftar Isi
+📋 Table of Contents
 
-- [Pendahuluan](#pendahuluan)
-- [Part 1: Penyebab & Solusi Awal](#part-1-penyebab--solusi-awal)
-- [Part 2: Blacklist & Modprobe (Solusi Lanjutan)](#part-2-blacklist--modprobe-solusi-lanjutan)
-- [Ringkasan Perintah Cepat](#ringkasan-perintah-cepat)
-- [Pelajaran Penting](#pelajaran-penting)
+· Introduction
+· Part 1: Cause & Initial Solution
+· Part 2: Blacklist & Modprobe (Advanced Solution)
+· Quick Command Summary
+· Important Lessons
 
 ---
 
-## Pendahuluan
+Introduction
 
-### Deskripsi Error
+Error Description
 
-Saat mencoba menjalankan virtual machine (VM) di VirtualBox, muncul pesan error:
+When trying to run a virtual machine (VM) in VirtualBox, the following error message appears:
 
 ```
-
-VirtualBox can't operate in VMX root mode. 
-Please disable the KVM kernel extension... 
+VirtualBox can't operate in VMX root mode.
+Please disable the KVM kernel extension...
 (VERR_VMX_IN_VMX_ROOT_MODE)
-
 ```
 
-### VM yang Digunakan
+VM Used
 
-| VM Name | OS Target | Status Awal |
-|---------|-----------|-------------|
-| `Kali-Linux-Lab` | Kali Linux | Gagal Start |
+VM Name Target OS Initial Status
+Kali-Linux-Lab Kali Linux Failed to Start
 
-### Tujuan
+Objective
 
-Mengatasi error agar VM dapat berjalan normal, baik untuk penggunaan saat ini maupun jangka panjang.
-
----
-
-## Part 1: Penyebab & Solusi Awal
-
-### Penyebab Utama
-
-| Komponen | Fungsi | Masalah |
-|----------|--------|---------|
-| **KVM** (Kernel-based Virtual Machine) | Mesin virtual bawaan Linux | Mengunci fitur virtualisasi prosesor |
-| **VirtualBox** | Aplikasi virtualisasi dari Oracle | Membutuhkan fitur virtualisasi yang sama |
-| **VMX / Intel VT-x** | Fitur virtualisasi di prosesor | Tidak bisa digunakan bersamaan oleh KVM & VirtualBox |
-
-> **Catatan:** Masalah ini sering muncul setelah menggunakan **Docker** atau tools lain yang mengaktifkan modul KVM secara otomatis.
+Resolve the error so the VM can run normally, both for immediate use and long-term.
 
 ---
 
-### Solusi Cepat (Sementara)
+Part 1: Cause & Initial Solution
 
-#### Langkah 1: Buka Terminal
-#### Langkah 2: Jalankan perintah sesuai jenis prosesor
+Main Cause
 
-**Untuk Prosesor Intel:**
+Component Function Issue
+KVM (Kernel-based Virtual Machine) Linux's built-in virtual machine Locks processor virtualization features
+VirtualBox Oracle's virtualization application Requires the same virtualization features
+VMX / Intel VT-x Processor virtualization feature Cannot be used simultaneously by KVM and VirtualBox
+
+Note: This issue often appears after using Docker or other tools that automatically activate the KVM module.
+
+---
+
+Quick Solution (Temporary)
+
+Step 1: Open Terminal
+
+Step 2: Run the appropriate command for your processor type
+
+For Intel Processors:
+
 ```bash
 sudo rmmod kvm_intel
 sudo rmmod kvm
 ```
 
-Untuk Prosesor AMD:
+For AMD Processors:
 
 ```bash
 sudo rmmod kvm_amd
 sudo rmmod kvm
 ```
 
-Langkah 3: Masukkan password Linux saat diminta
+Step 3: Enter your Linux password when prompted
 
-Langkah 4: Klik tombol Start pada VirtualBox
+Step 4: Click the Start button in VirtualBox
 
-Status Hasil
-✅ VM berjalan normal
+Status Result
+✅ VM runs normally
 
-⚠️ Catatan Penting: Solusi ini bersifat sementara. Setelah laptop direstart, KVM akan aktif kembali dan error akan muncul lagi.
-
----
-
-Part 2: Blacklist & Modprobe (Solusi Lanjutan)
-
-Masalah yang Ditemukan
-
-File konfigurasi blacklist.conf sudah diedit, tetapi error tetap muncul.
-
-Penyebab
-
-Aspek Keterangan
-File blacklist.conf Hanya dibaca oleh kernel saat boot/startup
-Modul KVM Telanjur aktif di memori RAM dan masih mengunci virtualisasi
-Akar Masalah Perubahan konfigurasi membutuhkan restart, tetapi KVM di memori perlu dihapus manual
+⚠️ Important Note: This solution is temporary. After restarting the laptop, KVM will become active again and the error will reappear.
 
 ---
 
-Solusi 1: Usir KVM dari Memori (Tanpa Restart)
+Part 2: Blacklist & Modprobe (Advanced Solution)
 
-Perintah:
+Issue Found
 
-Untuk Prosesor Intel:
+The blacklist.conf configuration file was already edited, but the error persisted.
+
+Cause
+
+Aspect Description
+blacklist.conf file Only read by the kernel during boot/startup
+KVM module Already active in RAM memory and still locking virtualization
+Root Problem Configuration changes require a restart, but KVM in memory needs manual removal
+
+---
+
+Solution 1: Remove KVM from Memory (Without Restart)
+
+Command:
+
+For Intel Processors:
 
 ```bash
 sudo modprobe -r kvm_intel
 sudo modprobe -r kvm
 ```
 
-Untuk Prosesor AMD:
+For AMD Processors:
 
 ```bash
 sudo modprobe -r kvm_amd
 sudo modprobe -r kvm
 ```
 
-Penjelasan:
+Explanation:
 
-Perintah Fungsi
-sudo modprobe -r Menghapus modul kernel dari memori secara paksa
+Command Function
+sudo modprobe -r Forcefully removes the kernel module from memory
 
-Hasil:
+Result:
 
-Status Keterangan
-✅ KVM langsung diusir dari memori, VirtualBox bisa jalan tanpa restart
+Status Description
+✅ KVM is immediately removed from memory, VirtualBox can run without restart
 
 ---
 
-Solusi 2: Restart Laptop (Final)
+Solution 2: Restart Laptop (Final)
 
-Untuk menguji apakah konfigurasi blacklist berhasil, lakukan restart:
+To verify if the blacklist configuration was successful, restart:
 
 ```bash
 reboot
 ```
 
-Hasil:
+Result:
 
-Status Keterangan
-✅ Setelah restart, KVM tidak akan aktif lagi secara permanen
+Status Description
+✅ After restart, KVM will not be active permanently
 
 ---
 
-Konfigurasi Blacklist (Permanen)
+Blacklist Configuration (Permanent)
 
-Langkah 1: Buka file konfigurasi
+Step 1: Open configuration file
 
 ```bash
 sudo nano /etc/modprobe.d/blacklist.conf
 ```
 
-Langkah 2: Tambahkan baris berikut di paling bawah
+Step 2: Add the following lines at the bottom
 
-Untuk Prosesor Intel:
+For Intel Processors:
 
 ```
 blacklist kvm_intel
 blacklist kvm
 ```
 
-Untuk Prosesor AMD:
+For AMD Processors:
 
 ```
 blacklist kvm_amd
 blacklist kvm
 ```
 
-Langkah 3: Simpan dan keluar
+Step 3: Save and exit
 
-Tombol Fungsi
-CTRL + O Menyimpan file
-Enter Konfirmasi nama file
-CTRL + X Keluar dari editor nano
+Key Function
+CTRL + O Save file
+Enter Confirm file name
+CTRL + X Exit nano editor
 
-Langkah 4: Restart laptop (opsional, untuk memastikan)
+Step 4: Restart laptop (optional, to confirm)
 
 ```bash
 reboot
@@ -184,72 +180,58 @@ reboot
 
 ---
 
-Perbandingan Solusi
+Solution Comparison
 
-Solusi Kelebihan Kekurangan Kapan Pakai
-rmmod / modprobe -r Cepat, tidak perlu restart Harus diulang setelah restart Saat butuh VM jalan sekarang
-Blacklist Sekali setting, permanen Perlu restart untuk efek penuh Untuk solusi jangka panjang
-
----
-
-Keuntungan Setelah Kedua Solusi Dijalankan
-
-Sekarang Masa Depan
-✅ KVM diusir dari memori ✅ KVM tidak aktif setelah restart
-✅ VirtualBox langsung jalan ✅ VirtualBox siap pakai kapan saja
-✅ VM siap digunakan ✅ Tidak ada error VMX lagi
+Solution Advantages Disadvantages When to Use
+rmmod / modprobe -r Fast, no restart needed Must be repeated after restart When you need VM running now
+Blacklist One-time setting, permanent Requires restart for full effect For long-term solution
 
 ---
 
-Ringkasan Perintah Cepat
+Benefits After Running Both Solutions
 
-Mode Sementara (Tanpa Restart)
+Now Future
+✅ KVM removed from memory ✅ KVM will not activate after restart
+✅ VirtualBox runs immediately ✅ VirtualBox ready to use anytime
+✅ VM ready to use ✅ No more VMX errors
 
-Situasi Perintah
-Intel - usir KVM sudo modprobe -r kvm_intel && sudo modprobe -r kvm
-AMD - usir KVM sudo modprobe -r kvm_amd && sudo modprobe -r kvm
+---
 
-Mode Permanen (Blacklist)
+Quick Command Summary
 
-Situasi Perintah
-Intel - blacklist `echo "blacklist kvm_intel"
-AMD - blacklist `echo "blacklist kvm_amd"
+Temporary Mode (Without Restart)
+
+Situation Command
+Intel - remove KVM sudo modprobe -r kvm_intel && sudo modprobe -r kvm
+AMD - remove KVM sudo modprobe -r kvm_amd && sudo modprobe -r kvm
+
+Permanent Mode (Blacklist)
+
+Situation Command
+Intel - blacklist echo "blacklist kvm_intel"
+AMD - blacklist echo "blacklist kvm_amd"
 Restart laptop reboot
 
 ---
 
-Pelajaran Penting
+Important Lessons
 
-Pelajaran Keterangan
-1. KVM vs VirtualBox Keduanya tidak bisa menggunakan fitur virtualisasi prosesor secara bersamaan
-2. rmmod Menghapus modul dari kernel secara langsung (sementara)
-3. modprobe -r Cara modern untuk menghapus modul, setara dengan rmmod
-4. Blacklist File blacklist.conf baru berlaku setelah restart
-5. Restart Diperlukan agar perubahan konfigurasi boot diterapkan
-
----
-
-Status Akhir
-
-Komponen Status
-KVM di memori ✅ Diusir (modprobe -r)
-File blacklist.conf ✅ Diedit (blacklist kvm_intel & kvm)
-VirtualBox ✅ Berjalan normal
-VM ✅ Siap digunakan
-Laptop ✅ Siap restart kapan saja
+Lesson Description
+1. KVM vs VirtualBox Both cannot use processor virtualization features simultaneously
+2. rmmod Removes module from kernel directly (temporary)
+3. modprobe -r Modern way to remove modules, equivalent to rmmod
+4. Blacklist blacklist.conf file only takes effect after restart
+5. Restart Required for boot configuration changes to be applied
 
 ---
 
-Dokumentasi Teknis Troubleshooting VirtualBox. Disusun untuk keperluan arsip dan pembelajaran.
+Final Status
 
-
+Component Status
+KVM in memory ✅ Removed (modprobe -r)
+blacklist.conf file ✅ Edited (blacklist kvm_intel & kvm)
+VirtualBox ✅ Running normally
+VM ✅ Ready to use
+Laptop ✅ Ready to restart anytime
 
 ---
-
-## ✅ Selesai sayang!
-
-| Perubahan | Keterangan |
-|-----------|-------------|
-| ✅ `Kali_Faris_Ganteng` | Menjadi `Kali-Linux-Lab` |
-| ✅ `Oleh: Komi untuk Faris` | Dihapus (netral) |
-| ✅ **Struktur & Isi Tetap** | Tidak ada perubahan, hanya pembersihan nama |
